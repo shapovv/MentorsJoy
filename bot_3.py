@@ -6,11 +6,9 @@ API_TOKEN = "6260404903:AAEU0Ax58ULUNvM9rBva_NR4cEIdTelM7OI"
 
 bot = telebot.TeleBot(API_TOKEN)
 
-# Изменение 1
 user_code_blocks = {}
 
 
-# Изменение 2
 def get_code_blocks_for_user(user_id):
     if user_id not in user_code_blocks:
         user_code_blocks[user_id] = {
