@@ -104,7 +104,7 @@ def document_template_handler(call):
         chat_steps[call.message.chat.id] = 0
         next_step_handler(call.message, step=0)
     elif document_type == "explanatory_note":
-       
+
         pass
 
 
