@@ -134,7 +134,6 @@ questions = [
 chat_steps = {}
 
 
-# Изменение 3
 def create_ask_and_save_handlers(question, code_block_key):
     def ask_handler(message):
         msg = bot.send_message(message.chat.id, question)
