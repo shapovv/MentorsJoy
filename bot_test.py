@@ -1,84 +1,50 @@
 import telebot
 from telebot import types
 from docxtpl import DocxTemplate
+from dotenv import load_dotenv
+import os
+import logging
 
-API_TOKEN = "6260404903:AAEU0Ax58ULUNvM9rBva_NR4cEIdTelM7OI"
+logging.basicConfig(filename='errors.log', level=logging.ERROR)
 
-bot = telebot.TeleBot(API_TOKEN)
+load_dotenv()
+bot = telebot.TeleBot(os.getenv('TOKEN'))
+last_chat_id = None
 
 tech_spec_code_blocks = {
     'university': '',
     'faculty': '',
     'department': '',
-    'project_name': '',
-    'project_name_eng': '',
-    'number': '',
-    'student_name': '',
-    'group_number': '',
-    'year': ''
 }
 
 explanatory_note_code_blocks = {
     'university': '',
     'faculty': '',
-    'department': '',
-    'project_name': '',
-    'project_name_eng': '',
-    'number': '',
-    'student_name': '',
-    'group_number': '',
-    'year': '',
-    'supervisor': ''
+    'department': ''
 }
 
 title_page_code_blocks = {
     'university': '',
     'faculty': '',
-    'department': '',
-    'project_name': '',
-    'project_name_eng': '',
-    'number': '',
-    'student_name': '',
-    'group_number': '',
-    'year': ''
+    'department': ''
 }
 
 tech_spec_questions = [
     ('Введите ВУЗ:', 'university'),
     ('Введите факультет:', 'faculty'),
-    ('Введите департамент:', 'department'),
-    ('Введите название работы:', 'project_name'),
-    ('Введите название работы на английском языке:', 'project_name_eng'),
-    ('Введите номер работы:', 'number'),
-    ('Введите ФИО исполнителя в формате (Иванов И. И.) :', 'student_name'),
-    ('Введите номер группы в формате (БПИ217) :', 'group_number'),
-    ('Введите год:', 'year')
+    ('Введите департамент:', 'department')
 ]
 
 explanatory_note_questions = [
     ('Введите ВУЗ:', 'university'),
     ('Введите факультет:', 'faculty'),
-    ('Введите департамент:', 'department'),
-    ('Введите название работы:', 'project_name'),
-    ('Введите название работы на английском языке:', 'project_name_eng'),
-    ('Введите номер работы:', 'number'),
-    ('Введите ФИО исполнителя в формате (Иванов И. И.) :', 'student_name'),
-    ('Введите номер группы в формате (БПИ217) :', 'group_number'),
-    ('Введите год:', 'year'),
-    ('Введите ФИО руководителя в формате (Петров П. П.) :', 'supervisor')
+    ('Введите департамент:', 'department')
 ]
 
 title_page_questions = [
     ('Введите ВУЗ:', 'university'),
     ('Введите факультет:', 'faculty'),
-    ('Введите департамент:', 'department'),
-    ('Введите название работы:', 'project_name'),
-    ('Введите название работы на английском языке:', 'project_name_eng'),
-    ('Введите номер работы:', 'number'),
-    ('Введите ФИО исполнителя в формате (Иванов И. И.) :', 'student_name'),
-    ('Введите номер группы в формате (БПИ217) :', 'group_number'),
-    ('Введите год:', 'year'),
-    ('Введите ФИО руководителя в формате (Петров П. П.) :', 'supervisor')
+    ('Введите департамент:', 'department')
 ]
 
 chat_steps = {}
@@ -110,6 +76,8 @@ title_page_handlers = [create_ask_and_save_handlers(title_page_code_blocks, ques
 
 
 def next_step_handler(message, step=0):
+    global last_chat_id
+    last_chat_id = message.chat.id
     chat_steps[message.chat.id] = step + 1
     document_type = current_document_type[message.chat.id]
     if document_type == "technical_specifications":
@@ -138,7 +106,10 @@ def start(message):
     button2 = types.InlineKeyboardButton("Пояснительная записка", callback_data="explanatory_note")
     button3 = types.InlineKeyboardButton("Титульный лист", callback_data="title_page")
 
-    keyboard.add(button1, button2, button3)
+    keyboard.add(button1)
+    keyboard.add(button2)
+    keyboard.add(button3)
+
     bot.send_message(message.chat.id, "Выберите тип документа:", reply_markup=keyboard)
 
 
@@ -153,6 +124,8 @@ def create_document(message, code_blocks, template_name, output_name):
 
 
 def handle_stop(message):
+    global last_chat_id
+    last_chat_id = message.chat.id
     bot.send_message(message.chat.id, 'Процесс создания документа прерван.')
     document_type = current_document_type[message.chat.id]
     if document_type == "technical_specifications":
@@ -165,6 +138,8 @@ def handle_stop(message):
 
 @bot.callback_query_handler(func=lambda call: True)
 def document_template_handler(call):
+    global last_chat_id
+    last_chat_id = call.message.chat.id
     document_type = call.data
     current_document_type[call.message.chat.id] = document_type
     if document_type == "technical_specifications":
@@ -180,6 +155,8 @@ def document_template_handler(call):
 
 @bot.message_handler(commands=['start'])
 def handle_start(message):
+    global last_chat_id
+    last_chat_id = message.chat.id
     start(message)
 
 
@@ -188,5 +165,34 @@ def handle_stop_command(message):
     handle_stop(message)
 
 
+@bot.message_handler(commands=['raise_error'])
+def handle_raise_error_command(message):
+    global last_chat_id
+    last_chat_id = message.chat.id
+    raise ValueError("Тестовое исключение")
+
+
+def send_error_message(error_message, chat_id=None):
+    global last_chat_id
+    if chat_id is None and last_chat_id is not None:
+        chat_id = last_chat_id
+
+    if chat_id is not None:
+        try:
+            bot.send_message(chat_id, error_message)
+        except Exception as e:
+            logging.error(f"Failed to send error message: {e}")
+    else:
+        logging.error(f"Cannot send error message, chat_id is missing: {error_message}")
+
+
+import time
+
 if __name__ == '__main__':
-    bot.polling(none_stop=True)
+    while True:
+        try:
+            bot.polling(none_stop=True)
+        except Exception as e:
+            logging.error(f"Error: {e}")
+            send_error_message(f"Произошла ошибка: {e}")
+            time.sleep(10)  # Задержка перед повторным запуском (в секундах)
