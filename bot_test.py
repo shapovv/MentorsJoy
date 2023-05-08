@@ -108,6 +108,22 @@ def send_format_choice(message):
     bot.send_message(message.chat.id, "Выберите формат файла:", reply_markup=keyboard)
 
 
+def send_restart_choice(message):
+    keyboard = types.InlineKeyboardMarkup()
+    button1 = types.InlineKeyboardButton("Создать новый документ", callback_data="restart")
+    button2 = types.InlineKeyboardButton("Закончить", callback_data="finish")
+
+    keyboard.add(button1)
+    keyboard.add(button2)
+
+    bot.send_message(message.chat.id, "Что вы хотите сделать дальше?", reply_markup=keyboard)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == "finish")
+def finish_handler(call):
+    bot.send_message(call.message.chat.id, "Благодарим Вас за использование нашего бота! Удачи!")
+
+
 @bot.callback_query_handler(func=lambda call: call.data.startswith("format_"))
 def format_choice_handler(call):
     global last_chat_id
@@ -147,6 +163,12 @@ def create_document(message, code_blocks, template_name, output_name, file_forma
     # Удалить .docx и .pdf файлы после отправки
     # os.remove(filename)
     # os.remove(pdf_filename)
+    send_restart_choice(message)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == "restart")
+def restart_handler(call):
+    start(call.message)
 
 
 def handle_stop(message):
