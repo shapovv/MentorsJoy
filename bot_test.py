@@ -4,48 +4,17 @@ from docxtpl import DocxTemplate
 from dotenv import load_dotenv
 import os
 import logging
+import time
+from tech_spec_data import tech_spec_code_blocks, tech_spec_questions
+from explanatory_note_data import explanatory_note_code_blocks, explanatory_note_questions
+from title_page_data import title_page_code_blocks, title_page_questions
 
-logging.basicConfig(filename='errors.log', level=logging.ERROR)
+logging.basicConfig(filename='errors.log', level=logging.ERROR, format='%(asctime)s - %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S')
 
 load_dotenv()
 bot = telebot.TeleBot(os.getenv('TOKEN'))
 last_chat_id = None
-
-tech_spec_code_blocks = {
-    'university': '',
-    'faculty': '',
-    'department': '',
-}
-
-explanatory_note_code_blocks = {
-    'university': '',
-    'faculty': '',
-    'department': ''
-}
-
-title_page_code_blocks = {
-    'university': '',
-    'faculty': '',
-    'department': ''
-}
-
-tech_spec_questions = [
-    ('Введите ВУЗ:', 'university'),
-    ('Введите факультет:', 'faculty'),
-    ('Введите департамент:', 'department')
-]
-
-explanatory_note_questions = [
-    ('Введите ВУЗ:', 'university'),
-    ('Введите факультет:', 'faculty'),
-    ('Введите департамент:', 'department')
-]
-
-title_page_questions = [
-    ('Введите ВУЗ:', 'university'),
-    ('Введите факультет:', 'faculty'),
-    ('Введите департамент:', 'department')
-]
 
 chat_steps = {}
 
@@ -54,7 +23,7 @@ current_document_type = {}
 
 def create_ask_and_save_handlers(code_blocks, question, code_block_key):
     def ask_handler(message):
-        msg = bot.send_message(message.chat.id, question)
+        msg = bot.send_message(message.chat.id, question, parse_mode='HTML')
         bot.register_next_step_handler(msg, save_handler)
 
     def save_handler(message):
@@ -172,7 +141,7 @@ def handle_raise_error_command(message):
     raise ValueError("Тестовое исключение")
 
 
-def send_error_message(error_message, chat_id=None):
+def send_error_message(error_message, chat_id=None, user_id=None):
     global last_chat_id
     if chat_id is None and last_chat_id is not None:
         chat_id = last_chat_id
@@ -183,16 +152,24 @@ def send_error_message(error_message, chat_id=None):
         except Exception as e:
             logging.error(f"Failed to send error message: {e}")
     else:
-        logging.error(f"Cannot send error message, chat_id is missing: {error_message}")
+        if user_id is None:
+            user_id_str = "unknown"
+        else:
+            user_id_str = str(user_id)
+        logging.error(f"Cannot send error message, chat_id is missing (user_id: {user_id_str}): {error_message}")
 
-
-import time
 
 if __name__ == '__main__':
     while True:
         try:
             bot.polling(none_stop=True)
         except Exception as e:
+            user_id = None
+            if last_chat_id is not None:
+                try:
+                    user_id = bot.get_chat(last_chat_id).id
+                except Exception:
+                    pass
             logging.error(f"Error: {e}")
-            send_error_message(f"Произошла ошибка: {e}")
-            time.sleep(10)  # Задержка перед повторным запуском (в секундах)
+            send_error_message(f"Произошла ошибка: {e}", user_id=user_id)
+            time.sleep(10)
