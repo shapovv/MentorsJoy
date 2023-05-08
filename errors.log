@@ -10,3 +10,5 @@ ERROR:root:Error: Тестовое исключение
 2023-05-08 21:16:12 - Error: 'bytes' object has no attribute 'get'
 2023-05-08 21:19:48 - Error: 'bytes' object has no attribute 'get'
 2023-05-08 21:21:56 - Error: Failed. Response status: 402. Response message: Payment Required. Error message: {"message":"You have started too many jobs at once","code":"PARALLEL_JOB_LIMIT_EXCEEDED"}
+2023-05-08 21:33:56 - Error: create_document() missing 1 required positional argument: 'file_format'
+2023-05-08 21:37:41 - Error: [Errno 2] No such file or directory: 'output_files/title_page_6260404903.pdf'
