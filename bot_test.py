@@ -1,3 +1,4 @@
+import requests
 import telebot
 from telebot import types
 from docxtpl import DocxTemplate
@@ -8,6 +9,13 @@ import time
 from tech_spec_data import tech_spec_code_blocks, tech_spec_questions
 from explanatory_note_data import explanatory_note_code_blocks, explanatory_note_questions
 from title_page_data import title_page_code_blocks, title_page_questions
+from docx2pdf import convert
+
+
+OUTPUT_FOLDER = "output_files"
+
+if not os.path.exists(OUTPUT_FOLDER):
+    os.makedirs(OUTPUT_FOLDER)
 
 logging.basicConfig(filename='errors.log', level=logging.ERROR, format='%(asctime)s - %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S')
@@ -82,14 +90,40 @@ def start(message):
     bot.send_message(message.chat.id, "Выберите тип документа:", reply_markup=keyboard)
 
 
+# def create_document(message, code_blocks, template_name, output_name):
+#     template = DocxTemplate(template_name)
+#     template.render(code_blocks)
+#     filename = f'{output_name}_{message.from_user.id}.docx'
+#     template.save(filename)
+#     bot.send_message(message.chat.id, 'Документ успешно создан!')
+#     with open(filename, 'rb') as file:
+#         bot.send_document(message.chat.id, file)
+
+
 def create_document(message, code_blocks, template_name, output_name):
     template = DocxTemplate(template_name)
     template.render(code_blocks)
-    filename = f'{output_name}_{message.from_user.id}.docx'
+    filename = os.path.join(OUTPUT_FOLDER, f'{output_name}_{message.from_user.id}.docx')
+    pdf_filename = os.path.join(OUTPUT_FOLDER, f'{output_name}_{message.from_user.id}.pdf')
     template.save(filename)
     bot.send_message(message.chat.id, 'Документ успешно создан!')
     with open(filename, 'rb') as file:
         bot.send_document(message.chat.id, file)
+    # Конвертировать .docx файл в .pdf
+    convert(filename, pdf_filename)
+
+    with open(pdf_filename, 'rb') as file:
+        # Отправить .pdf файл пользователю
+        bot.send_document(message.chat.id, file)
+
+    # # Удалить .docx и .pdf файлы после отправки
+    # os.remove(filename)
+    # os.remove(pdf_filename)
+
+
+
+
+
 
 
 def handle_stop(message):
