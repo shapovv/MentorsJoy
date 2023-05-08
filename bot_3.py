@@ -1,14 +1,18 @@
 import telebot
 from telebot import types
 from docxtpl import DocxTemplate
-from dictionaries_for_technical_task import get_code_blocks_for_user, questions
+from dictionaries_for_technical_task import get_code_blocks_for_user, technical_task_questions, \
+    explanatory_note_questions
 
 API_TOKEN = "6260404903:AAEU0Ax58ULUNvM9rBva_NR4cEIdTelM7OI"
 
 bot = telebot.TeleBot(API_TOKEN)
 
-
 chat_steps = {}
+
+
+def create_handlers_from_questions(questions_list):
+    return [create_ask_and_save_handlers(question, key) for question, key in questions_list]
 
 
 def create_ask_and_save_handlers(question, code_block_key):
@@ -27,16 +31,17 @@ def create_ask_and_save_handlers(question, code_block_key):
     return ask_handler, save_handler
 
 
-handlers = [create_ask_and_save_handlers(question, key) for question, key in questions]
+technical_task_handlers = create_handlers_from_questions(technical_task_questions)
+explanatory_note_handlers = create_handlers_from_questions(explanatory_note_questions)
 
 
-def next_step_handler(message, step=0):
+def next_step_handler(message, handlers_list, step=0):
     chat_steps[message.chat.id] = step + 1
-    if step < len(handlers):
-        ask_handler, _ = handlers[step]
+    if step < len(handlers_list):
+        ask_handler, _ = handlers_list[step]
         ask_handler(message)
-    elif step == len(handlers):
-        create_document(message)
+    elif step == len(handlers_list):
+        create_document(message)  # Вы можете заменить эту строку на вызов функции для создания пояснительной записки, если необходимо
 
 
 def start(message):
@@ -58,6 +63,17 @@ def create_document(message):
         bot.send_document(message.chat.id, file)
 
 
+def create_explanatory_note_document(message):
+    template = DocxTemplate('explanatory_note_template.docx')
+    code_blocks = get_code_blocks_for_user(message.from_user.id)
+    template.render(code_blocks)
+    filename = f'explanatory_note_result_{message.from_user.id}.docx'
+    template.save(filename)
+    bot.send_message(message.chat.id, 'Пояснительная записка успешно создана!')
+    with open(filename, 'rb') as file:
+        bot.send_document(message.chat.id, file)
+
+
 def handle_stop(message):
     bot.send_message(message.chat.id, 'Процесс создания документа прерван.')
     create_document(message)
@@ -68,10 +84,10 @@ def document_template_handler(call):
     document_type = call.data
     if document_type == "technical_specifications":
         chat_steps[call.message.chat.id] = 0
-        next_step_handler(call.message, step=0)
+        next_step_handler(call.message, technical_task_handlers, step=0)
     elif document_type == "explanatory_note":
-        # Здесь можно добавить шаги для работы с пояснительной запиской
-        pass
+        chat_steps[call.message.chat.id] = 0
+        next_step_handler(call.message, explanatory_note_handlers, step=0)
 
 
 @bot.message_handler(commands=['start'])

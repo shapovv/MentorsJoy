@@ -50,12 +50,15 @@ def get_code_blocks_for_user(user_id):
             'characteristic_5': '',
             'types_of_tests': '',
             'general_requirements_acceptance_of_work': '',
-            'sources': ''
+            'sources': '',
+            'explanatory_note_introduction': '',
+            'explanatory_note_body': '',
+            'explanatory_note_conclusion': ''
         }
     return user_code_blocks[user_id]
 
 
-questions = [
+technical_task_questions = [
     (
         'Сначала заполним титульный лист.\n\nВведите полное название ВУЗа, например "Национальный исследовательский университет Высшая Школа Экономики":',
         'university'),
@@ -118,5 +121,18 @@ questions = [
     ('Введите общие требования к приемке работы:', 'general_requirements_acceptance_of_work'),
     (
         'Заключительный раздел "Список использованных источников".\n\nПо умолчанию в него включены 10 основных ГОСТ-ов, по которым оформляется техническое задание. Чтобы добавить свои источники, введите их через перевод строки в одном сообщении:',
-        'sources')
+        'sources'),
+    (
+        'Теперь заполним пояснительную записку.\n\nВведите текст введения пояснительной записки:',
+        'explanatory_note_introduction'),
+    ('Введите текст основной части пояснительной записки:', 'explanatory_note_body'),
+    ('Введите текст заключения пояснительной записки:', 'explanatory_note_conclusion')
+]
+
+explanatory_note_questions = [
+    (
+        'Теперь заполним пояснительную записку.\n\nВведите текст введения пояснительной записки:',
+        'explanatory_note_introduction'),
+    ('Введите текст основной части пояснительной записки:', 'explanatory_note_body'),
+    ('Введите текст заключения пояснительной записки:', 'explanatory_note_conclusion')
 ]
