@@ -12,3 +12,50 @@ ERROR:root:Error: Тестовое исключение
 2023-05-08 21:21:56 - Error: Failed. Response status: 402. Response message: Payment Required. Error message: {"message":"You have started too many jobs at once","code":"PARALLEL_JOB_LIMIT_EXCEEDED"}
 2023-05-08 21:33:56 - Error: create_document() missing 1 required positional argument: 'file_format'
 2023-05-08 21:37:41 - Error: [Errno 2] No such file or directory: 'output_files/title_page_6260404903.pdf'
+2023-05-09 00:39:25 - Threaded polling exception: A request to the Telegram API was unsuccessful. Error code: 400. Description: Bad Request: can't parse entities: Can't find end tag corresponding to start tag b
+2023-05-09 00:39:25 - Exception traceback:
+Traceback (most recent call last):
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/__init__.py", line 1074, in __threaded_polling
+    self.worker_pool.raise_exceptions()
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/util.py", line 147, in raise_exceptions
+    raise self.exception_info
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/util.py", line 90, in run
+    task(*args, **kwargs)
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/__init__.py", line 6720, in _run_middlewares_and_handler
+    result = handler['function'](message)
+  File "/Users/shapovv/PycharmProjects/Radost/bot_test.py", line 182, in document_template_handler
+    bot.send_message(call.message.chat.id,
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/__init__.py", line 1549, in send_message
+    apihelper.send_message(
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/apihelper.py", line 264, in send_message
+    return _make_request(token, method_url, params=payload, method='post')
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/apihelper.py", line 162, in _make_request
+    json_result = _check_result(method_name, result)
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/apihelper.py", line 189, in _check_result
+    raise ApiTelegramException(method_name, result, result_json)
+telebot.apihelper.ApiTelegramException: A request to the Telegram API was unsuccessful. Error code: 400. Description: Bad Request: can't parse entities: Can't find end tag corresponding to start tag b
+
+2023-05-09 00:39:58 - Threaded polling exception: A request to the Telegram API was unsuccessful. Error code: 400. Description: Bad Request: can't parse entities: Can't find end tag corresponding to start tag b
+2023-05-09 00:39:58 - Exception traceback:
+Traceback (most recent call last):
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/__init__.py", line 1074, in __threaded_polling
+    self.worker_pool.raise_exceptions()
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/util.py", line 147, in raise_exceptions
+    raise self.exception_info
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/util.py", line 90, in run
+    task(*args, **kwargs)
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/__init__.py", line 6720, in _run_middlewares_and_handler
+    result = handler['function'](message)
+  File "/Users/shapovv/PycharmProjects/Radost/bot_test.py", line 182, in document_template_handler
+    bot.send_message(call.message.chat.id,
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/__init__.py", line 1549, in send_message
+    apihelper.send_message(
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/apihelper.py", line 264, in send_message
+    return _make_request(token, method_url, params=payload, method='post')
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/apihelper.py", line 162, in _make_request
+    json_result = _check_result(method_name, result)
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/apihelper.py", line 189, in _check_result
+    raise ApiTelegramException(method_name, result, result_json)
+telebot.apihelper.ApiTelegramException: A request to the Telegram API was unsuccessful. Error code: 400. Description: Bad Request: can't parse entities: Can't find end tag corresponding to start tag b
+
+2023-05-09 01:20:58 - Error: HTTPSConnectionPool(host='api.telegram.org', port=443): Read timed out. (read timeout=25)

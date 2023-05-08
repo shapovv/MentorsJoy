@@ -42,12 +42,12 @@ def create_ask_and_save_handlers(code_blocks, question, code_block_key):
     return ask_handler, save_handler
 
 
+title_page_handlers = [create_ask_and_save_handlers(title_page_code_blocks, question, key) for question, key
+                       in title_page_questions]
 tech_spec_handlers = [create_ask_and_save_handlers(tech_spec_code_blocks, question, key) for question, key in
                       tech_spec_questions]
 explanatory_note_handlers = [create_ask_and_save_handlers(explanatory_note_code_blocks, question, key) for question, key
                              in explanatory_note_questions]
-title_page_handlers = [create_ask_and_save_handlers(title_page_code_blocks, question, key) for question, key
-                       in title_page_questions]
 
 
 def next_step_handler(message, step=0):
@@ -55,7 +55,13 @@ def next_step_handler(message, step=0):
     last_chat_id = message.chat.id
     chat_steps[message.chat.id] = step + 1
     document_type = current_document_type[message.chat.id]
-    if document_type == "technical_specifications":
+    if document_type == "title_page":
+        if step < len(title_page_handlers):
+            ask_handler, _ = title_page_handlers[step]
+            ask_handler(message)
+        elif step == len(title_page_handlers):
+            send_format_choice(message)
+    elif document_type == "technical_specifications":
         if step < len(tech_spec_handlers):
             ask_handler, _ = tech_spec_handlers[step]
             ask_handler(message)
@@ -67,19 +73,13 @@ def next_step_handler(message, step=0):
             ask_handler(message)
         elif step == len(explanatory_note_handlers):
             send_format_choice(message)
-    elif document_type == "title_page":
-        if step < len(title_page_handlers):
-            ask_handler, _ = title_page_handlers[step]
-            ask_handler(message)
-        elif step == len(title_page_handlers):
-            send_format_choice(message)
 
 
 def start(message):
     keyboard = types.InlineKeyboardMarkup()
-    button1 = types.InlineKeyboardButton("Техническое задание", callback_data="technical_specifications")
-    button2 = types.InlineKeyboardButton("Пояснительная записка", callback_data="explanatory_note")
-    button3 = types.InlineKeyboardButton("Титульный лист", callback_data="title_page")
+    button1 = types.InlineKeyboardButton("Титульный лист", callback_data="title_page")
+    button2 = types.InlineKeyboardButton("Техническое задание", callback_data="technical_specifications")
+    button3 = types.InlineKeyboardButton("Пояснительная записка", callback_data="explanatory_note")
 
     keyboard.add(button1)
     keyboard.add(button2)
@@ -87,15 +87,6 @@ def start(message):
 
     bot.send_message(message.chat.id, "Выберите тип документа:", reply_markup=keyboard)
 
-
-# def create_document(message, code_blocks, template_name, output_name):
-#     template = DocxTemplate(template_name)
-#     template.render(code_blocks)
-#     filename = f'{output_name}_{message.from_user.id}.docx'
-#     template.save(filename)
-#     bot.send_message(message.chat.id, 'Документ успешно создан!')
-#     with open(filename, 'rb') as file:
-#         bot.send_document(message.chat.id, file)
 
 def send_format_choice(message):
     keyboard = types.InlineKeyboardMarkup()
@@ -105,7 +96,7 @@ def send_format_choice(message):
     keyboard.add(button1)
     keyboard.add(button2)
 
-    bot.send_message(message.chat.id, "Выберите формат файла:", reply_markup=keyboard)
+    bot.send_message(message.chat.id, "Выберите в каком формате вы хотите получить документ:", reply_markup=keyboard)
 
 
 def send_restart_choice(message):
@@ -115,13 +106,14 @@ def send_restart_choice(message):
 
     keyboard.add(button1)
     keyboard.add(button2)
-
     bot.send_message(message.chat.id, "Что вы хотите сделать дальше?", reply_markup=keyboard)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "finish")
 def finish_handler(call):
-    bot.send_message(call.message.chat.id, "Благодарим Вас за использование нашего бота! Удачи!")
+    bot.send_message(call.message.chat.id,
+                     "Благодарим Вас за использование нашего бота!\n\nC уважением, <b>Mentors Joy</b>.",
+                     parse_mode='HTML')
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("format_"))
@@ -130,7 +122,6 @@ def format_choice_handler(call):
     last_chat_id = call.message.chat.id
     format_choice = call.data.split("_")[1]
 
-    # Запустите функцию create_document с выбранным форматом файла
     document_type = current_document_type[call.message.chat.id]
     if document_type == "technical_specifications":
         create_document(call.message, tech_spec_code_blocks, 'tech_spec_maket.docx', 'technical_specifications',
@@ -152,18 +143,17 @@ def create_document(message, code_blocks, template_name, output_name, file_forma
     if file_format == "docx":
         with open(filename, 'rb') as file:
             bot.send_document(message.chat.id, file)
+        send_restart_choice(message)
     elif file_format == "pdf":
-        # Конвертировать .docx файл в .pdf
         convert(filename, pdf_filename)
 
         with open(pdf_filename, 'rb') as file:
-            # Отправить .pdf файл пользователю
             bot.send_document(message.chat.id, file)
+        send_restart_choice(message)
 
-    # Удалить .docx и .pdf файлы после отправки
+    # Удалить .docx и .pdf файлы после отправки?
     # os.remove(filename)
     # os.remove(pdf_filename)
-    send_restart_choice(message)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "restart")
@@ -177,13 +167,10 @@ def handle_stop(message):
     bot.send_message(message.chat.id, 'Процесс создания документа прерван.')
     document_type = current_document_type[message.chat.id]
     if document_type == "technical_specifications":
-        # create_document(message, tech_spec_code_blocks, 'tech_spec_maket.docx', 'technical_specifications')
         send_format_choice(message)
     elif document_type == "explanatory_note":
-        # create_document(message, explanatory_note_code_blocks, 'explanatory_note_maket.docx', 'explanatory_note')
         send_format_choice(message)
     elif document_type == "title_page":
-        # create_document(message, title_page_code_blocks, 'title_page_maket.docx', 'title_page')
         send_format_choice(message)
 
 
@@ -194,6 +181,9 @@ def document_template_handler(call):
     document_type = call.data
     current_document_type[call.message.chat.id] = document_type
     if document_type == "technical_specifications":
+        # bot.send_message(call.message.chat.id,
+        #                  "<b>Приступим к созданию вашего технического задания.<b>\n Сейчас мы поэтапно пройдём по всем пунктам, начиная с титульного листа и заканчивая списком литературы. Следуйте дальнейшим указаниям и подсказкам. \n\nВ любом месте вы можете остановиться и отправить ответ позднее, а если захотите закончить и получить не док онца заполненный документ, введите /stop. \n\nЕсли вы хотите пропустить любой шаг, необходимо отправить в ответ любой символ, тогда вы сможете заполнить этот раздел самостоятельно в итоговом документе.",
+        #                  parse_mode='HTML')
         chat_steps[call.message.chat.id] = 0
         next_step_handler(call.message, step=0)
     elif document_type == "explanatory_note":
