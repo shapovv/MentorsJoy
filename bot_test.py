@@ -31,6 +31,18 @@ explanatory_note_code_blocks = {
     'supervisor': ''
 }
 
+title_page_code_blocks = {
+    'university': '',
+    'faculty': '',
+    'department': '',
+    'project_name': '',
+    'project_name_eng': '',
+    'number': '',
+    'student_name': '',
+    'group_number': '',
+    'year': ''
+}
+
 tech_spec_questions = [
     ('Введите ВУЗ:', 'university'),
     ('Введите факультет:', 'faculty'),
@@ -44,6 +56,19 @@ tech_spec_questions = [
 ]
 
 explanatory_note_questions = [
+    ('Введите ВУЗ:', 'university'),
+    ('Введите факультет:', 'faculty'),
+    ('Введите департамент:', 'department'),
+    ('Введите название работы:', 'project_name'),
+    ('Введите название работы на английском языке:', 'project_name_eng'),
+    ('Введите номер работы:', 'number'),
+    ('Введите ФИО исполнителя в формате (Иванов И. И.) :', 'student_name'),
+    ('Введите номер группы в формате (БПИ217) :', 'group_number'),
+    ('Введите год:', 'year'),
+    ('Введите ФИО руководителя в формате (Петров П. П.) :', 'supervisor')
+]
+
+title_page_questions = [
     ('Введите ВУЗ:', 'university'),
     ('Введите факультет:', 'faculty'),
     ('Введите департамент:', 'department'),
@@ -80,6 +105,8 @@ tech_spec_handlers = [create_ask_and_save_handlers(tech_spec_code_blocks, questi
                       tech_spec_questions]
 explanatory_note_handlers = [create_ask_and_save_handlers(explanatory_note_code_blocks, question, key) for question, key
                              in explanatory_note_questions]
+title_page_handlers = [create_ask_and_save_handlers(title_page_code_blocks, question, key) for question, key
+                       in title_page_questions]
 
 
 def next_step_handler(message, step=0):
@@ -97,13 +124,21 @@ def next_step_handler(message, step=0):
             ask_handler(message)
         elif step == len(explanatory_note_handlers):
             create_document(message, explanatory_note_code_blocks, 'explanatory_note_maket.docx', 'explanatory_note')
+    elif document_type == "title_page":
+        if step < len(title_page_handlers):
+            ask_handler, _ = title_page_handlers[step]
+            ask_handler(message)
+        elif step == len(title_page_handlers):
+            create_document(message, title_page_code_blocks, 'title_page_maket.docx', 'title_page')
 
 
 def start(message):
     keyboard = types.InlineKeyboardMarkup()
     button1 = types.InlineKeyboardButton("Техническое задание", callback_data="technical_specifications")
     button2 = types.InlineKeyboardButton("Пояснительная записка", callback_data="explanatory_note")
-    keyboard.add(button1, button2)
+    button3 = types.InlineKeyboardButton("Титульный лист", callback_data="title_page")
+
+    keyboard.add(button1, button2, button3)
     bot.send_message(message.chat.id, "Выберите тип документа:", reply_markup=keyboard)
 
 
@@ -124,6 +159,8 @@ def handle_stop(message):
         create_document(message, tech_spec_code_blocks, 'tech_spec_maket.docx', 'technical_specifications')
     elif document_type == "explanatory_note":
         create_document(message, explanatory_note_code_blocks, 'explanatory_note_maket.docx', 'explanatory_note')
+    elif document_type == "title_page":
+        create_document(message, title_page_code_blocks, 'title_page_maket.docx', 'title_page')
 
 
 @bot.callback_query_handler(func=lambda call: True)
@@ -134,6 +171,9 @@ def document_template_handler(call):
         chat_steps[call.message.chat.id] = 0
         next_step_handler(call.message, step=0)
     elif document_type == "explanatory_note":
+        chat_steps[call.message.chat.id] = 0
+        next_step_handler(call.message, step=0)
+    elif document_type == "title_page":
         chat_steps[call.message.chat.id] = 0
         next_step_handler(call.message, step=0)
 
