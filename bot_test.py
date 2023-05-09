@@ -33,6 +33,9 @@ def create_ask_and_save_handlers(code_blocks, question, code_block_key):
         bot.register_next_step_handler(msg, save_handler)
 
     def save_handler(message):
+        if message.text.startswith("/start"):
+            handle_start_after_creation(message)
+            return
         if message.text.startswith("/stop"):
             handle_stop(message)
             return
@@ -85,7 +88,40 @@ def start(message):
     keyboard.add(button2)
     keyboard.add(button3)
 
-    bot.send_message(message.chat.id, "Выберите тип документа:", reply_markup=keyboard)
+    bot.send_message(message.chat.id, "Выберите документ, который хотите создать:", reply_markup=keyboard)
+
+
+@bot.message_handler(
+    func=lambda message: message.text.startswith("/start") and message.chat.id in current_document_type)
+def handle_start_after_document_creation(message):
+    handle_start_after_creation(message)
+
+
+def handle_start_after_creation(message):
+    reset_document_creation(message.chat.id)
+    bot.send_message(message.chat.id, "Приступаем к созданию нового документа.")
+    start(message)
+
+
+def reset_document_creation(chat_id):
+    if chat_id in current_document_type:
+        del current_document_type[chat_id]
+    if chat_id in chat_steps:
+        del chat_steps[chat_id]
+    if chat_id in title_page_code_blocks:
+        for key in title_page_code_blocks:
+            title_page_code_blocks[key] = ''
+    if chat_id in tech_spec_code_blocks:
+        for key in tech_spec_code_blocks:
+            tech_spec_code_blocks[key] = ''
+    if chat_id in explanatory_note_code_blocks:
+        for key in explanatory_note_code_blocks:
+            explanatory_note_code_blocks[key] = ''
+
+
+@bot.message_handler(func=lambda message: message.text == "/start" and message.chat.id in current_document_type)
+def handle_start_after_document_creation(message):
+    handle_start_after_creation(message)
 
 
 def update_document_choice_to_inactive(chat_id, message_id, selected_document_type):
@@ -104,7 +140,8 @@ def update_document_choice_to_inactive(chat_id, message_id, selected_document_ty
     keyboard.add(button2)
     keyboard.add(button3)
 
-    bot.edit_message_text("Выберите тип документа:", chat_id=chat_id, message_id=message_id, reply_markup=keyboard)
+    bot.edit_message_text("Выберите документ, который хотите создать:", chat_id=chat_id, message_id=message_id,
+                          reply_markup=keyboard)
 
 
 def send_format_choice(message):
@@ -132,8 +169,10 @@ def send_restart_choice(message):
 
 def update_buttons_to_inactive(chat_id, message_id, selected_button):
     keyboard = types.InlineKeyboardMarkup()
-    button1 = types.InlineKeyboardButton("Создать новый документ" + (" ✅" if selected_button == "new_document" else " ❌"), callback_data="ignore")
-    button2 = types.InlineKeyboardButton("Закончить" + (" ✅" if selected_button == "finish" else " ❌"), callback_data="ignore")
+    button1 = types.InlineKeyboardButton(
+        "Создать новый документ" + (" ✅" if selected_button == "new_document" else " ❌"), callback_data="ignore")
+    button2 = types.InlineKeyboardButton("Закончить" + (" ✅" if selected_button == "finish" else " ❌"),
+                                         callback_data="ignore")
 
     button1.url = None
     button2.url = None
@@ -141,8 +180,8 @@ def update_buttons_to_inactive(chat_id, message_id, selected_button):
     keyboard.add(button1)
     keyboard.add(button2)
 
-    bot.edit_message_text("Что вы хотите сделать дальше?", chat_id=chat_id, message_id=message_id, reply_markup=keyboard)
-
+    bot.edit_message_text("Что вы хотите сделать дальше?", chat_id=chat_id, message_id=message_id,
+                          reply_markup=keyboard)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "finish")
@@ -224,15 +263,27 @@ def document_template_handler(call):
 
     current_document_type[call.message.chat.id] = document_type
     if document_type == "technical_specifications":
-        # bot.send_message(call.message.chat.id,
-        #                  "<b>Приступим к созданию вашего технического задания.<b>\n Сейчас мы поэтапно пройдём по всем пунктам, начиная с титульного листа и заканчивая списком литературы. Следуйте дальнейшим указаниям и подсказкам. \n\nВ любом месте вы можете остановиться и отправить ответ позднее, а если захотите закончить и получить не док онца заполненный документ, введите /stop. \n\nЕсли вы хотите пропустить любой шаг, необходимо отправить в ответ любой символ, тогда вы сможете заполнить этот раздел самостоятельно в итоговом документе.",
-        #                  parse_mode='HTML')
+        bot.send_message(call.message.chat.id,
+                         "<b>Приступим к созданию вашего технического задания.</b>\n"
+                         "Сейчас мы поэтапно пройдём по всем пунктам, начиная с титульного листа и заканчивая списком литературы. "
+                         "Следуйте дальнейшим указаниям и подсказкам. \n\nВ любом месте вы можете остановиться и отправить ответ позднее, "
+                         "а если захотите закончить и получить не до конца заполненный документ, введите /stop. \n\n"
+                         "Если вы хотите пропустить любой шаг, необходимо отправить в ответ любой символ, тогда вы сможете "
+                         "заполнить этот раздел самостоятельно в итоговом документе.",
+                         parse_mode='HTML')
         chat_steps[call.message.chat.id] = 0
         next_step_handler(call.message, step=0)
     elif document_type == "explanatory_note":
         chat_steps[call.message.chat.id] = 0
         next_step_handler(call.message, step=0)
     elif document_type == "title_page":
+        bot.send_message(call.message.chat.id,
+                         "<b>Приступим к созданию вашего титульного листа.</b>\nСейчас мы поэтапно пройдём по всем пунктам, "
+                         "следуйте дальнейшим указаниям и подсказкам. \n\nВ любом месте вы можете остановиться и отправить ответ "
+                         "позднее, а если захотите закончить и получить не до конца заполненный документ, введите /stop. \n\nЕсли вы "
+                         "хотите пропустить любой шаг, необходимо отправить в ответ любой символ, тогда вы сможете заполнить этот раздел "
+                         "самостоятельно в итоговом документе.",
+                         parse_mode='HTML')
         chat_steps[call.message.chat.id] = 0
         next_step_handler(call.message, step=0)
 
