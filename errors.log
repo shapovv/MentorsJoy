@@ -59,3 +59,103 @@ Traceback (most recent call last):
 telebot.apihelper.ApiTelegramException: A request to the Telegram API was unsuccessful. Error code: 400. Description: Bad Request: can't parse entities: Can't find end tag corresponding to start tag b
 
 2023-05-09 01:20:58 - Error: HTTPSConnectionPool(host='api.telegram.org', port=443): Read timed out. (read timeout=25)
+2023-05-09 14:43:10 - Threaded polling exception: A request to the Telegram API was unsuccessful. Error code: 400. Description: Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message
+2023-05-09 14:43:10 - Exception traceback:
+Traceback (most recent call last):
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/__init__.py", line 1074, in __threaded_polling
+    self.worker_pool.raise_exceptions()
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/util.py", line 147, in raise_exceptions
+    raise self.exception_info
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/util.py", line 90, in run
+    task(*args, **kwargs)
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/__init__.py", line 6720, in _run_middlewares_and_handler
+    result = handler['function'](message)
+  File "/Users/shapovv/PycharmProjects/Radost/bot_test.py", line 216, in document_template_handler
+    update_document_choice_to_inactive(call.message.chat.id, call.message.message_id)
+  File "/Users/shapovv/PycharmProjects/Radost/bot_test.py", line 104, in update_document_choice_to_inactive
+    bot.edit_message_reply_markup(chat_id=chat_id, message_id=message_id, reply_markup=keyboard)
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/__init__.py", line 3850, in edit_message_reply_markup
+    result = apihelper.edit_message_reply_markup(self.token, chat_id, message_id, inline_message_id, reply_markup)
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/apihelper.py", line 1352, in edit_message_reply_markup
+    return _make_request(token, method_url, params=payload, method='post')
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/apihelper.py", line 162, in _make_request
+    json_result = _check_result(method_name, result)
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/apihelper.py", line 189, in _check_result
+    raise ApiTelegramException(method_name, result, result_json)
+telebot.apihelper.ApiTelegramException: A request to the Telegram API was unsuccessful. Error code: 400. Description: Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message
+
+2023-05-09 14:43:12 - Threaded polling exception: A request to the Telegram API was unsuccessful. Error code: 400. Description: Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message
+2023-05-09 14:43:12 - Exception traceback:
+Traceback (most recent call last):
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/__init__.py", line 1074, in __threaded_polling
+    self.worker_pool.raise_exceptions()
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/util.py", line 147, in raise_exceptions
+    raise self.exception_info
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/util.py", line 90, in run
+    task(*args, **kwargs)
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/__init__.py", line 6720, in _run_middlewares_and_handler
+    result = handler['function'](message)
+  File "/Users/shapovv/PycharmProjects/Radost/bot_test.py", line 216, in document_template_handler
+    update_document_choice_to_inactive(call.message.chat.id, call.message.message_id)
+  File "/Users/shapovv/PycharmProjects/Radost/bot_test.py", line 104, in update_document_choice_to_inactive
+    bot.edit_message_reply_markup(chat_id=chat_id, message_id=message_id, reply_markup=keyboard)
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/__init__.py", line 3850, in edit_message_reply_markup
+    result = apihelper.edit_message_reply_markup(self.token, chat_id, message_id, inline_message_id, reply_markup)
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/apihelper.py", line 1352, in edit_message_reply_markup
+    return _make_request(token, method_url, params=payload, method='post')
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/apihelper.py", line 162, in _make_request
+    json_result = _check_result(method_name, result)
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/apihelper.py", line 189, in _check_result
+    raise ApiTelegramException(method_name, result, result_json)
+telebot.apihelper.ApiTelegramException: A request to the Telegram API was unsuccessful. Error code: 400. Description: Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message
+
+2023-05-09 14:43:13 - Threaded polling exception: A request to the Telegram API was unsuccessful. Error code: 400. Description: Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message
+2023-05-09 14:43:13 - Exception traceback:
+Traceback (most recent call last):
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/__init__.py", line 1074, in __threaded_polling
+    self.worker_pool.raise_exceptions()
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/util.py", line 147, in raise_exceptions
+    raise self.exception_info
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/util.py", line 90, in run
+    task(*args, **kwargs)
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/__init__.py", line 6720, in _run_middlewares_and_handler
+    result = handler['function'](message)
+  File "/Users/shapovv/PycharmProjects/Radost/bot_test.py", line 216, in document_template_handler
+    update_document_choice_to_inactive(call.message.chat.id, call.message.message_id)
+  File "/Users/shapovv/PycharmProjects/Radost/bot_test.py", line 104, in update_document_choice_to_inactive
+    bot.edit_message_reply_markup(chat_id=chat_id, message_id=message_id, reply_markup=keyboard)
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/__init__.py", line 3850, in edit_message_reply_markup
+    result = apihelper.edit_message_reply_markup(self.token, chat_id, message_id, inline_message_id, reply_markup)
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/apihelper.py", line 1352, in edit_message_reply_markup
+    return _make_request(token, method_url, params=payload, method='post')
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/apihelper.py", line 162, in _make_request
+    json_result = _check_result(method_name, result)
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/apihelper.py", line 189, in _check_result
+    raise ApiTelegramException(method_name, result, result_json)
+telebot.apihelper.ApiTelegramException: A request to the Telegram API was unsuccessful. Error code: 400. Description: Bad Request: message is not modified: specified new message content and reply markup are exactly the same as a current content and reply markup of the message
+
+2023-05-09 15:03:42 - Threaded polling exception: A request to the Telegram API was unsuccessful. Error code: 400. Description: Bad Request: can't parse inline keyboard button: Text buttons are unallowed in the inline keyboard
+2023-05-09 15:03:42 - Exception traceback:
+Traceback (most recent call last):
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/__init__.py", line 1074, in __threaded_polling
+    self.worker_pool.raise_exceptions()
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/util.py", line 147, in raise_exceptions
+    raise self.exception_info
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/util.py", line 90, in run
+    task(*args, **kwargs)
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/__init__.py", line 6720, in _run_middlewares_and_handler
+    result = handler['function'](message)
+  File "/Users/shapovv/PycharmProjects/Radost/bot_test.py", line 154, in finish_handler
+    update_buttons_to_inactive(call.message.chat.id, call.message.message_id, document_type)
+  File "/Users/shapovv/PycharmProjects/Radost/bot_test.py", line 143, in update_buttons_to_inactive
+    bot.edit_message_text("Что вы хотите сделать дальше?", chat_id=chat_id, message_id=message_id,
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/__init__.py", line 3784, in edit_message_text
+    result = apihelper.edit_message_text(self.token, text, chat_id, message_id, inline_message_id, parse_mode,
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/apihelper.py", line 1304, in edit_message_text
+    return _make_request(token, method_url, params=payload, method='post')
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/apihelper.py", line 162, in _make_request
+    json_result = _check_result(method_name, result)
+  File "/Users/shapovv/PycharmProjects/Radost/venv/lib/python3.9/site-packages/telebot/apihelper.py", line 189, in _check_result
+    raise ApiTelegramException(method_name, result, result_json)
+telebot.apihelper.ApiTelegramException: A request to the Telegram API was unsuccessful. Error code: 400. Description: Bad Request: can't parse inline keyboard button: Text buttons are unallowed in the inline keyboard
+

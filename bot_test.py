@@ -88,6 +88,25 @@ def start(message):
     bot.send_message(message.chat.id, "Выберите тип документа:", reply_markup=keyboard)
 
 
+def update_document_choice_to_inactive(chat_id, message_id, selected_document_type):
+    keyboard = types.InlineKeyboardMarkup()
+
+    button1 = types.InlineKeyboardButton("Титульный лист" + (" ✅" if selected_document_type == "title_page" else " ❌"),
+                                         callback_data="ignore")
+    button2 = types.InlineKeyboardButton(
+        "Техническое задание" + (" ✅" if selected_document_type == "technical_specifications" else " ❌"),
+        callback_data="ignore")
+    button3 = types.InlineKeyboardButton(
+        "Пояснительная записка" + (" ✅" if selected_document_type == "explanatory_note" else " ❌"),
+        callback_data="ignore")
+
+    keyboard.add(button1)
+    keyboard.add(button2)
+    keyboard.add(button3)
+
+    bot.edit_message_text("Выберите тип документа:", chat_id=chat_id, message_id=message_id, reply_markup=keyboard)
+
+
 def send_format_choice(message):
     keyboard = types.InlineKeyboardMarkup()
     button1 = types.InlineKeyboardButton("DOCX", callback_data="format_docx")
@@ -106,11 +125,29 @@ def send_restart_choice(message):
 
     keyboard.add(button1)
     keyboard.add(button2)
-    bot.send_message(message.chat.id, "Что вы хотите сделать дальше?", reply_markup=keyboard)
+
+    sent_message = bot.send_message(message.chat.id, "Что вы хотите сделать дальше?", reply_markup=keyboard)
+    return sent_message.message_id
+
+
+def update_buttons_to_inactive(chat_id, message_id, selected_button):
+    keyboard = types.InlineKeyboardMarkup()
+    button1 = types.InlineKeyboardButton("Создать новый документ" + (" ✅" if selected_button == "new_document" else " ❌"), callback_data="ignore")
+    button2 = types.InlineKeyboardButton("Закончить" + (" ✅" if selected_button == "finish" else " ❌"), callback_data="ignore")
+
+    button1.url = None
+    button2.url = None
+
+    keyboard.add(button1)
+    keyboard.add(button2)
+
+    bot.edit_message_text("Что вы хотите сделать дальше?", chat_id=chat_id, message_id=message_id, reply_markup=keyboard)
+
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "finish")
 def finish_handler(call):
+    update_buttons_to_inactive(call.message.chat.id, call.message.message_id, "finish")
     bot.send_message(call.message.chat.id,
                      "Благодарим Вас за использование нашего бота!\n\nC уважением, <b>Mentors Joy</b>.",
                      parse_mode='HTML')
@@ -143,13 +180,12 @@ def create_document(message, code_blocks, template_name, output_name, file_forma
     if file_format == "docx":
         with open(filename, 'rb') as file:
             bot.send_document(message.chat.id, file)
-        send_restart_choice(message)
     elif file_format == "pdf":
         convert(filename, pdf_filename)
 
         with open(pdf_filename, 'rb') as file:
             bot.send_document(message.chat.id, file)
-        send_restart_choice(message)
+    send_restart_choice(message)
 
     # Удалить .docx и .pdf файлы после отправки?
     # os.remove(filename)
@@ -158,6 +194,7 @@ def create_document(message, code_blocks, template_name, output_name, file_forma
 
 @bot.callback_query_handler(func=lambda call: call.data == "restart")
 def restart_handler(call):
+    update_buttons_to_inactive(call.message.chat.id, call.message.message_id, "new_document")
     start(call.message)
 
 
@@ -179,6 +216,12 @@ def document_template_handler(call):
     global last_chat_id
     last_chat_id = call.message.chat.id
     document_type = call.data
+
+    if document_type == "ignore":
+        return  # Завершить обработчик, если callback_data равно "ignore"
+
+    update_document_choice_to_inactive(call.message.chat.id, call.message.message_id, document_type)
+
     current_document_type[call.message.chat.id] = document_type
     if document_type == "technical_specifications":
         # bot.send_message(call.message.chat.id,
