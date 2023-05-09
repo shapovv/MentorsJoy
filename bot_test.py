@@ -274,6 +274,13 @@ def document_template_handler(call):
         chat_steps[call.message.chat.id] = 0
         next_step_handler(call.message, step=0)
     elif document_type == "explanatory_note":
+        bot.send_message(call.message.chat.id,
+                         "<b>Приступим к созданию вашей пояснительной записки.</b>\n Сейчас мы поэтапно пройдём по всем пунктам, "
+                         "начиная с титульного листа и заканчивая списком литературы. Следуйте дальнейшим указаниям и подсказкам. "
+                         "\n\nВ любом месте вы можете остановиться и отправить ответ позднее, а если захотите закончить и получить "
+                         "не до конца заполненный документ, введите /stop. \n\nЕсли вы хотите пропустить любой шаг, необходимо отправить "
+                         "в ответ любой символ, тогда вы сможете заполнить этот раздел самостоятельно в итоговом документе.",
+                         parse_mode='HTML')
         chat_steps[call.message.chat.id] = 0
         next_step_handler(call.message, step=0)
     elif document_type == "title_page":
