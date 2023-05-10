@@ -1,6 +1,7 @@
 import logging
 import os
 import time
+import uuid
 
 from docx2pdf import convert
 from docxtpl import DocxTemplate
@@ -11,7 +12,6 @@ from telebot import types
 from explanatory_note_data import explanatory_note_questions
 from tech_spec_data import tech_spec_questions
 from title_page_data import title_page_questions
-
 
 OUTPUT_FOLDER = "output_files"
 
@@ -32,6 +32,21 @@ current_document_type = {}
 title_page_code_blocks = {}
 tech_spec_code_blocks = {}
 explanatory_note_code_blocks = {}
+file_id_dict = {}
+
+
+def generate_file_id():
+    return str(uuid.uuid4())
+
+
+def store_file_id(filename):
+    file_id = generate_file_id()
+    file_id_dict[file_id] = filename
+    return file_id
+
+
+def get_filename_by_file_id(file_id):
+    return file_id_dict.get(file_id)
 
 
 def create_code_blocks(chat_id):
@@ -204,29 +219,27 @@ def finish_handler(call):
 
 
 def ask_for_conversion(message, filename):
-    markup = telebot.types.InlineKeyboardMarkup()
-    conversion_button = telebot.types.InlineKeyboardButton(
-        text='Конвертировать',
-        callback_data=f'convert_to_pdf,{filename}'
-    )
-    no_conversion_button = telebot.types.InlineKeyboardButton(
-        text='Не нужно',
-        callback_data=f'no_conversion,{filename}'
-    )
-    markup.add(conversion_button, no_conversion_button)
+    keyboard = types.InlineKeyboardMarkup()
+    file_id = store_file_id(filename)
+    button1 = types.InlineKeyboardButton("Конвертировать", callback_data=f'convert_to_pdf,{file_id}')
+    button2 = types.InlineKeyboardButton("Не нужно", callback_data=f'no_conversion,{file_id}')
+    keyboard.add(button1, button2)
+
     bot.send_message(message.chat.id,
                      '<b>Хотите конвертировать файл в формат PDF?</b>\n\n'
                      'Конвертация создает повышенную нагрузку на наш сервер, поэтому если нет острой необходимости, '
-                     'откажитесь от нее, пожалуйста.',
-                     parse_mode='HTML', reply_markup=markup)
+                     'откажитесь от нее, пожалуйста. Если же конвертация необходима, нажмите на кнопку один раз и '
+                     'подождите 10-15 секунд.',
+                     parse_mode='HTML', reply_markup=keyboard)
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('convert_to_pdf'))
 def convert_to_pdf_callback(call):
-    _, filename = call.data.split(',', 1)
+    _, file_id = call.data.split(',', 1)
+    filename = get_filename_by_file_id(file_id)
 
     pdf_filename = os.path.splitext(filename)[0] + '.pdf'
-    os.chmod("/Users/shapovv/PycharmProjects/Radost/output_files", 0o777)
+    # os.chmod("/Users/shapovv/PycharmProjects/Radost/output_files", 0o777)
     os.chmod(filename, 0o777)
     convert(filename, pdf_filename)
 
@@ -240,7 +253,8 @@ def convert_to_pdf_callback(call):
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('no_conversion'))
 def no_conversion_callback(call):
-    _, filename = call.data.split(',', 1)
+    _, file_id = call.data.split(',', 1)
+    filename = get_filename_by_file_id(file_id)
 
     # Изменяем кнопки
     update_conversion_buttons(call, '❌ Конвертировать', '✅ Не нужно', True)
@@ -339,7 +353,7 @@ def document_template_handler(call):
         next_step_handler(call.message, step=0)
     elif document_type == "explanatory_note":
         bot.send_message(call.message.chat.id,
-                         "<b>Приступим к созданию вашей пояснительной записки.</b>\n Сейчас мы поэтапно пройдём по всем пунктам, "
+                         "<b>Приступим к созданию вашей пояснительной записки.</b>\nСейчас мы поэтапно пройдём по всем пунктам, "
                          "начиная с титульного листа и заканчивая списком литературы. Следуйте дальнейшим указаниям и подсказкам. "
                          "\n\nВ любом месте вы можете остановиться и отправить ответ позднее, а если захотите закончить и получить "
                          "не до конца заполненный документ, введите /stop. \n\nЕсли вы хотите пропустить любой шаг, необходимо отправить "
