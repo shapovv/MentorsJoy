@@ -5,9 +5,9 @@ from dotenv import load_dotenv
 import os
 import logging
 import time
-from tech_spec_data import tech_spec_code_blocks, tech_spec_questions
-from explanatory_note_data import explanatory_note_code_blocks, explanatory_note_questions
-from title_page_data import title_page_code_blocks, title_page_questions
+from tech_spec_data import tech_spec_questions
+from explanatory_note_data import explanatory_note_questions
+from title_page_data import title_page_questions
 from docx2pdf import convert
 
 OUTPUT_FOLDER = "output_files"
@@ -26,6 +26,16 @@ chat_steps = {}
 
 current_document_type = {}
 
+title_page_code_blocks = {}
+tech_spec_code_blocks = {}
+explanatory_note_code_blocks = {}
+
+
+def create_code_blocks(chat_id):
+    title_page_code_blocks[chat_id] = {key: '' for _, key in title_page_questions}
+    tech_spec_code_blocks[chat_id] = {key: '' for _, key in tech_spec_questions}
+    explanatory_note_code_blocks[chat_id] = {key: '' for _, key in explanatory_note_questions}
+
 
 def create_ask_and_save_handlers(code_blocks, question, code_block_key):
     def ask_handler(message):
@@ -39,7 +49,10 @@ def create_ask_and_save_handlers(code_blocks, question, code_block_key):
         if message.text.startswith("/stop"):
             handle_stop(message)
             return
-        code_blocks[code_block_key] = message.text
+        chat_id = message.chat.id
+        if chat_id not in code_blocks:
+            code_blocks[chat_id] = {}
+        code_blocks[chat_id][code_block_key] = message.text
         next_step_handler(message, chat_steps[message.chat.id])
 
     return ask_handler, save_handler
@@ -109,14 +122,11 @@ def reset_document_creation(chat_id):
     if chat_id in chat_steps:
         del chat_steps[chat_id]
     if chat_id in title_page_code_blocks:
-        for key in title_page_code_blocks:
-            title_page_code_blocks[key] = ''
+        del title_page_code_blocks[chat_id]
     if chat_id in tech_spec_code_blocks:
-        for key in tech_spec_code_blocks:
-            tech_spec_code_blocks[key] = ''
+        del tech_spec_code_blocks[chat_id]
     if chat_id in explanatory_note_code_blocks:
-        for key in explanatory_note_code_blocks:
-            explanatory_note_code_blocks[key] = ''
+        del explanatory_note_code_blocks[chat_id]
 
 
 @bot.message_handler(func=lambda message: message.text == "/start" and message.chat.id in current_document_type)
@@ -200,30 +210,53 @@ def format_choice_handler(call):
 
     document_type = current_document_type[call.message.chat.id]
     if document_type == "technical_specifications":
-        create_document(call.message, tech_spec_code_blocks, 'tech_spec_maket.docx', 'technical_specifications',
-                        format_choice)
+        create_document(call.message, tech_spec_code_blocks[call.message.chat.id], 'tech_spec_maket.docx',
+                        'technical_specifications', format_choice)
     elif document_type == "explanatory_note":
-        create_document(call.message, explanatory_note_code_blocks, 'explanatory_note_maket.docx', 'explanatory_note',
-                        format_choice)
+        create_document(call.message, explanatory_note_code_blocks[call.message.chat.id], 'explanatory_note_maket.docx',
+                        'explanatory_note', format_choice)
     elif document_type == "title_page":
-        create_document(call.message, title_page_code_blocks, 'title_page_maket.docx', 'title_page', format_choice)
+        create_document(call.message, title_page_code_blocks[call.message.chat.id], 'title_page_maket.docx',
+                        'title_page', format_choice)
+
+
+from docxtpl import DocxTemplate
+from docx2pdf import convert
 
 
 def create_document(message, code_blocks, template_name, output_name, file_format):
+    # Загрузите шаблон
     template = DocxTemplate(template_name)
+
+    # Рендерим шаблон с помощью code_blocks
     template.render(code_blocks)
-    filename = os.path.join(OUTPUT_FOLDER, f'{output_name}_{message.from_user.id}.docx')
-    pdf_filename = os.path.join(OUTPUT_FOLDER, f'{output_name}_{message.from_user.id}.pdf')
+
+    # Создаем имя файла с учетом second_name и year
+    second_name = code_blocks['second_name']
+    year = code_blocks['year']
+    filename = os.path.join(OUTPUT_FOLDER, f'{output_name}_{second_name}_{year}.docx')
+
+    # Сохраняем отрендеренный шаблон в файл
     template.save(filename)
 
-    if file_format == "docx":
-        with open(filename, 'rb') as file:
-            bot.send_document(message.chat.id, file)
-    elif file_format == "pdf":
-        convert(filename, pdf_filename)
+    # Изменяем разрешения файла
+    os.chmod(filename, 0o777)
 
+    # Если выбран формат PDF, конвертируем файл в PDF
+    if file_format == "pdf":
+        pdf_filename = os.path.join(OUTPUT_FOLDER, f'{output_name}_{second_name}_{year}.pdf')
+        convert(filename, pdf_filename)
+        os.chmod(pdf_filename, 0o777)
+
+        # Отправляем PDF файл
         with open(pdf_filename, 'rb') as file:
             bot.send_document(message.chat.id, file)
+
+    # Если выбран формат DOCX, отправляем файл без конвертации
+    elif file_format == "docx":
+        with open(filename, 'rb') as file:
+            bot.send_document(message.chat.id, file)
+
     send_restart_choice(message)
 
     # Удалить .docx и .pdf файлы после отправки?
@@ -299,6 +332,7 @@ def document_template_handler(call):
 def handle_start(message):
     global last_chat_id
     last_chat_id = message.chat.id
+    create_code_blocks(message.chat.id)
     start(message)
 
 

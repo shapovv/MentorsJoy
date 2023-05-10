@@ -207,3 +207,18 @@ Traceback (most recent call last):
     raise ApiTelegramException(method_name, result, result_json)
 telebot.apihelper.ApiTelegramException: A request to the Telegram API was unsuccessful. Error code: 400. Description: Bad Request: can't parse entities: Unsupported start tag "b/" at byte offset 95
 
+2023-05-10 13:43:37 - Error: HTTPSConnectionPool(host='api.telegram.org', port=443): Read timed out. (read timeout=25)
+2023-05-10 13:50:55 - Error: HTTPSConnectionPool(host='api.telegram.org', port=443): Read timed out. (read timeout=25)
+2023-05-10 15:24:04 - Error: keywords must be strings
+2023-05-10 15:24:14 - Error: keywords must be strings
+2023-05-10 15:45:00 - Error: [Errno 2] No such file or directory: 'output_files/title_page_Shapovalov_2023.docx'
+2023-05-10 15:47:44 - Error: [Errno 2] No such file or directory: 'output_files/title_page_shap_2023.docx'
+2023-05-10 15:51:19 - Error: [Errno 2] No such file or directory: 'output_files/title_page_Shapovv_2023.docx'
+2023-05-10 15:51:30 - Error: [Errno 2] No such file or directory: 'output_files/title_page_Shapovv_2023.docx'
+2023-05-10 15:55:38 - Error: [Errno 2] No such file or directory: 'output_files/title_page_shapovv_2023.pdf'
+2023-05-10 15:55:49 - Error: [Errno 2] No such file or directory: 'output_files/title_page_shapovv_2023.pdf'
+2023-05-10 16:00:38 - Error: [Errno 2] No such file or directory: 'output_files/title_page_Osip_2025.pdf'
+2023-05-10 16:00:48 - Error: [Errno 2] No such file or directory: 'output_files/title_page_Osip_2025.pdf'
+2023-05-10 16:00:58 - Error: [Errno 2] No such file or directory: 'output_files/title_page_Osip_2025.pdf'
+2023-05-10 16:01:09 - Error: [Errno 2] No such file or directory: 'output_files/title_page_Osip_2025.pdf'
+2023-05-10 16:01:29 - Error: [Errno 2] No such file or directory: 'output_files/title_page_Osip_2025.pdf'
