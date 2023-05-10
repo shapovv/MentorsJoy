@@ -1,14 +1,17 @@
-import telebot
-from telebot import types
+import logging
+import os
+import time
+
+from docx2pdf import convert
 from docxtpl import DocxTemplate
 from dotenv import load_dotenv
-import os
-import logging
-import time
-from tech_spec_data import tech_spec_questions
+import telebot
+from telebot import types
+
 from explanatory_note_data import explanatory_note_questions
+from tech_spec_data import tech_spec_questions
 from title_page_data import title_page_questions
-from docx2pdf import convert
+
 
 OUTPUT_FOLDER = "output_files"
 
@@ -119,6 +122,12 @@ def handle_start_after_creation(message):
     start(message)
 
 
+# def handle_start_after_error(message):
+#     reset_document_creation(message.chat.id)
+#     bot.send_message(message.chat.id, "Возникла ошибка, приступите к созданию нового документа.")
+#     start(message)
+
+
 def reset_document_creation(chat_id):
     if chat_id in current_document_type:
         del current_document_type[chat_id]
@@ -155,17 +164,6 @@ def update_document_choice_to_inactive(chat_id, message_id, selected_document_ty
 
     bot.edit_message_text("Выберите документ, который хотите создать:", chat_id=chat_id, message_id=message_id,
                           reply_markup=keyboard)
-
-
-# def send_format_choice(message):
-#     keyboard = types.InlineKeyboardMarkup()
-#     button1 = types.InlineKeyboardButton("DOCX", callback_data="format_docx")
-#     button2 = types.InlineKeyboardButton("PDF", callback_data="format_pdf")
-#
-#     keyboard.add(button1)
-#     keyboard.add(button2)
-#
-#     bot.send_message(message.chat.id, "Выберите в каком формате вы хотите получить документ:", reply_markup=keyboard)
 
 
 def send_restart_choice(message):
@@ -205,24 +203,6 @@ def finish_handler(call):
                      parse_mode='HTML')
 
 
-# @bot.callback_query_handler(func=lambda call: call.data.startswith("format_"))
-# def format_choice_handler(call):
-#     global last_chat_id
-#     last_chat_id = call.message.chat.id
-#     format_choice = call.data.split("_")[1]
-#
-#     document_type = current_document_type[call.message.chat.id]
-#     if document_type == "technical_specifications":
-#         create_document(call.message, tech_spec_code_blocks[call.message.chat.id], 'tech_spec_maket.docx',
-#                         'technical_specifications', format_choice)
-#     elif document_type == "explanatory_note":
-#         create_document(call.message, explanatory_note_code_blocks[call.message.chat.id], 'explanatory_note_maket.docx',
-#                         'explanatory_note', format_choice)
-#     elif document_type == "title_page":
-#         create_document(call.message, title_page_code_blocks[call.message.chat.id], 'title_page_maket.docx',
-#                         'title_page', format_choice)
-
-
 def ask_for_conversion(message, filename):
     markup = telebot.types.InlineKeyboardMarkup()
     conversion_button = telebot.types.InlineKeyboardButton(
@@ -234,7 +214,11 @@ def ask_for_conversion(message, filename):
         callback_data=f'no_conversion,{filename}'
     )
     markup.add(conversion_button, no_conversion_button)
-    bot.send_message(message.chat.id, 'Хотите конвертировать файл в формат PDF?', reply_markup=markup)
+    bot.send_message(message.chat.id,
+                     '<b>Хотите конвертировать файл в формат PDF?</b>\n\n'
+                     'Конвертация создает повышенную нагрузку на наш сервер, поэтому если нет острой необходимости, '
+                     'откажитесь от нее, пожалуйста.',
+                     parse_mode='HTML', reply_markup=markup)
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('convert_to_pdf'))
@@ -242,8 +226,9 @@ def convert_to_pdf_callback(call):
     _, filename = call.data.split(',', 1)
 
     pdf_filename = os.path.splitext(filename)[0] + '.pdf'
+    os.chmod("/Users/shapovv/PycharmProjects/Radost/output_files", 0o777)
+    os.chmod(filename, 0o777)
     convert(filename, pdf_filename)
-    os.chmod(pdf_filename, 0o777)
 
     with open(pdf_filename, 'rb') as file:
         bot.send_document(call.message.chat.id, file)
@@ -379,6 +364,11 @@ def handle_start(message):
     global last_chat_id
     last_chat_id = message.chat.id
     create_code_blocks(message.chat.id)
+    bot.send_message(message.chat.id, 'Добро пожаловать в бота <b>"Mentors Joy"</b>!\n\n'
+                                      'Я помогу вам создать профессиональную техническую документацию, '
+                                      'включая Титульный лист, Техническое задание и Пояснительную записку. '
+                                      'Все документы будут оформлены согласно ГОСТам, что обеспечит точность и качество '
+                                      'вашей работы.', parse_mode='HTML')
     start(message)
 
 
@@ -402,6 +392,8 @@ def send_error_message(error_message, chat_id=None, user_id=None):
     if chat_id is not None:
         try:
             bot.send_message(chat_id, error_message)
+            bot.send_message(chat_id, "Чтобы начать создание документа заново введите сначала /stop, а затем /start.")
+
         except Exception as e:
             logging.error(f"Failed to send error message: {e}")
     else:
