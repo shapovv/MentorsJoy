@@ -222,3 +222,6 @@ telebot.apihelper.ApiTelegramException: A request to the Telegram API was unsucc
 2023-05-10 16:00:58 - Error: [Errno 2] No such file or directory: 'output_files/title_page_Osip_2025.pdf'
 2023-05-10 16:01:09 - Error: [Errno 2] No such file or directory: 'output_files/title_page_Osip_2025.pdf'
 2023-05-10 16:01:29 - Error: [Errno 2] No such file or directory: 'output_files/title_page_Osip_2025.pdf'
+2023-05-10 16:28:19 - Error: HTTPSConnectionPool(host='api.telegram.org', port=443): Read timed out. (read timeout=25)
+2023-05-10 16:47:23 - Error: 760923861
+2023-05-10 18:12:46 - Error: Тестовое исключение

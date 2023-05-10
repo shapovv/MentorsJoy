@@ -76,19 +76,22 @@ def next_step_handler(message, step=0):
             ask_handler, _ = title_page_handlers[step]
             ask_handler(message)
         elif step == len(title_page_handlers):
-            send_format_choice(message)
+            create_document(message, title_page_code_blocks[message.chat.id], 'title_page_maket.docx',
+                            'title_page')
     elif document_type == "technical_specifications":
         if step < len(tech_spec_handlers):
             ask_handler, _ = tech_spec_handlers[step]
             ask_handler(message)
         elif step == len(tech_spec_handlers):
-            send_format_choice(message)
+            create_document(message, tech_spec_code_blocks[message.chat.id], 'tech_spec_maket.docx',
+                            'technical_specifications')
     elif document_type == "explanatory_note":
         if step < len(explanatory_note_handlers):
             ask_handler, _ = explanatory_note_handlers[step]
             ask_handler(message)
         elif step == len(explanatory_note_handlers):
-            send_format_choice(message)
+            create_document(message, explanatory_note_code_blocks[message.chat.id], 'explanatory_note_maket.docx',
+                            'explanatory_note')
 
 
 def start(message):
@@ -154,15 +157,15 @@ def update_document_choice_to_inactive(chat_id, message_id, selected_document_ty
                           reply_markup=keyboard)
 
 
-def send_format_choice(message):
-    keyboard = types.InlineKeyboardMarkup()
-    button1 = types.InlineKeyboardButton("DOCX", callback_data="format_docx")
-    button2 = types.InlineKeyboardButton("PDF", callback_data="format_pdf")
-
-    keyboard.add(button1)
-    keyboard.add(button2)
-
-    bot.send_message(message.chat.id, "Выберите в каком формате вы хотите получить документ:", reply_markup=keyboard)
+# def send_format_choice(message):
+#     keyboard = types.InlineKeyboardMarkup()
+#     button1 = types.InlineKeyboardButton("DOCX", callback_data="format_docx")
+#     button2 = types.InlineKeyboardButton("PDF", callback_data="format_pdf")
+#
+#     keyboard.add(button1)
+#     keyboard.add(button2)
+#
+#     bot.send_message(message.chat.id, "Выберите в каком формате вы хотите получить документ:", reply_markup=keyboard)
 
 
 def send_restart_choice(message):
@@ -202,62 +205,102 @@ def finish_handler(call):
                      parse_mode='HTML')
 
 
-@bot.callback_query_handler(func=lambda call: call.data.startswith("format_"))
-def format_choice_handler(call):
-    global last_chat_id
-    last_chat_id = call.message.chat.id
-    format_choice = call.data.split("_")[1]
-
-    document_type = current_document_type[call.message.chat.id]
-    if document_type == "technical_specifications":
-        create_document(call.message, tech_spec_code_blocks[call.message.chat.id], 'tech_spec_maket.docx',
-                        'technical_specifications', format_choice)
-    elif document_type == "explanatory_note":
-        create_document(call.message, explanatory_note_code_blocks[call.message.chat.id], 'explanatory_note_maket.docx',
-                        'explanatory_note', format_choice)
-    elif document_type == "title_page":
-        create_document(call.message, title_page_code_blocks[call.message.chat.id], 'title_page_maket.docx',
-                        'title_page', format_choice)
-
-
-from docxtpl import DocxTemplate
-from docx2pdf import convert
+# @bot.callback_query_handler(func=lambda call: call.data.startswith("format_"))
+# def format_choice_handler(call):
+#     global last_chat_id
+#     last_chat_id = call.message.chat.id
+#     format_choice = call.data.split("_")[1]
+#
+#     document_type = current_document_type[call.message.chat.id]
+#     if document_type == "technical_specifications":
+#         create_document(call.message, tech_spec_code_blocks[call.message.chat.id], 'tech_spec_maket.docx',
+#                         'technical_specifications', format_choice)
+#     elif document_type == "explanatory_note":
+#         create_document(call.message, explanatory_note_code_blocks[call.message.chat.id], 'explanatory_note_maket.docx',
+#                         'explanatory_note', format_choice)
+#     elif document_type == "title_page":
+#         create_document(call.message, title_page_code_blocks[call.message.chat.id], 'title_page_maket.docx',
+#                         'title_page', format_choice)
 
 
-def create_document(message, code_blocks, template_name, output_name, file_format):
-    # Загрузите шаблон
+def ask_for_conversion(message, filename):
+    markup = telebot.types.InlineKeyboardMarkup()
+    conversion_button = telebot.types.InlineKeyboardButton(
+        text='Конвертировать',
+        callback_data=f'convert_to_pdf,{filename}'
+    )
+    no_conversion_button = telebot.types.InlineKeyboardButton(
+        text='Не нужно',
+        callback_data=f'no_conversion,{filename}'
+    )
+    markup.add(conversion_button, no_conversion_button)
+    bot.send_message(message.chat.id, 'Хотите конвертировать файл в формат PDF?', reply_markup=markup)
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith('convert_to_pdf'))
+def convert_to_pdf_callback(call):
+    _, filename = call.data.split(',', 1)
+
+    pdf_filename = os.path.splitext(filename)[0] + '.pdf'
+    convert(filename, pdf_filename)
+    os.chmod(pdf_filename, 0o777)
+
+    with open(pdf_filename, 'rb') as file:
+        bot.send_document(call.message.chat.id, file)
+
+    # Изменяем кнопки
+    update_conversion_buttons(call, '✅ Конвертировать', '❌ Не нужно', True)
+    send_restart_choice(call.message)
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith('no_conversion'))
+def no_conversion_callback(call):
+    _, filename = call.data.split(',', 1)
+
+    # Изменяем кнопки
+    update_conversion_buttons(call, '❌ Конвертировать', '✅ Не нужно', True)
+    send_restart_choice(call.message)
+
+
+def update_conversion_buttons(call, conversion_text, no_conversion_text, disable_buttons):
+    markup = telebot.types.InlineKeyboardMarkup()
+
+    conversion_button = telebot.types.InlineKeyboardButton(
+        text=conversion_text,
+        callback_data='dummy_data',
+        disabled=disable_buttons
+    )
+    no_conversion_button = telebot.types.InlineKeyboardButton(
+        text=no_conversion_text,
+        callback_data='dummy_data',
+        disabled=disable_buttons
+    )
+
+    markup.add(conversion_button, no_conversion_button)
+    bot.edit_message_text(chat_id=call.message.chat.id,
+                          message_id=call.message.message_id,
+                          text=call.message.text,
+                          reply_markup=markup)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == 'dummy_data')
+def dummy_callback(call):
+    pass
+
+
+def create_document(message, code_blocks, template_name, output_name):
     template = DocxTemplate(template_name)
-
-    # Рендерим шаблон с помощью code_blocks
     template.render(code_blocks)
-
-    # Создаем имя файла с учетом second_name и year
     second_name = code_blocks['second_name']
     year = code_blocks['year']
     filename = os.path.join(OUTPUT_FOLDER, f'{output_name}_{second_name}_{year}.docx')
-
-    # Сохраняем отрендеренный шаблон в файл
     template.save(filename)
-
-    # Изменяем разрешения файла
     os.chmod(filename, 0o777)
 
-    # Если выбран формат PDF, конвертируем файл в PDF
-    if file_format == "pdf":
-        pdf_filename = os.path.join(OUTPUT_FOLDER, f'{output_name}_{second_name}_{year}.pdf')
-        convert(filename, pdf_filename)
-        os.chmod(pdf_filename, 0o777)
+    with open(filename, 'rb') as file:
+        bot.send_document(message.chat.id, file)
 
-        # Отправляем PDF файл
-        with open(pdf_filename, 'rb') as file:
-            bot.send_document(message.chat.id, file)
-
-    # Если выбран формат DOCX, отправляем файл без конвертации
-    elif file_format == "docx":
-        with open(filename, 'rb') as file:
-            bot.send_document(message.chat.id, file)
-
-    send_restart_choice(message)
+    ask_for_conversion(message, filename)
 
     # Удалить .docx и .pdf файлы после отправки?
     # os.remove(filename)
@@ -276,11 +319,14 @@ def handle_stop(message):
     bot.send_message(message.chat.id, 'Процесс создания документа прерван.')
     document_type = current_document_type[message.chat.id]
     if document_type == "technical_specifications":
-        send_format_choice(message)
+        create_document(message, tech_spec_code_blocks[message.chat.id], 'tech_spec_maket.docx',
+                        'technical_specifications')
     elif document_type == "explanatory_note":
-        send_format_choice(message)
+        create_document(message, explanatory_note_code_blocks[message.chat.id], 'explanatory_note_maket.docx',
+                        'explanatory_note')
     elif document_type == "title_page":
-        send_format_choice(message)
+        create_document(message, title_page_code_blocks[message.chat.id], 'title_page_maket.docx',
+                        'title_page')
 
 
 @bot.callback_query_handler(func=lambda call: True)
