@@ -12,6 +12,7 @@ from telebot import types
 from explanatory_note_data import explanatory_note_questions
 from tech_spec_data import tech_spec_questions
 from title_page_data import title_page_questions
+from feedback_data import feedback_questions
 
 OUTPUT_FOLDER = "output_files"
 
@@ -32,6 +33,8 @@ current_document_type = {}
 title_page_code_blocks = {}
 tech_spec_code_blocks = {}
 explanatory_note_code_blocks = {}
+feedback_code_blocks = {}
+
 file_id_dict = {}
 
 
@@ -53,6 +56,7 @@ def create_code_blocks(chat_id):
     title_page_code_blocks[chat_id] = {key: '' for _, key in title_page_questions}
     tech_spec_code_blocks[chat_id] = {key: '' for _, key in tech_spec_questions}
     explanatory_note_code_blocks[chat_id] = {key: '' for _, key in explanatory_note_questions}
+    feedback_code_blocks[chat_id] = {key: '' for _, key in feedback_questions}
 
 
 def create_ask_and_save_handlers(code_blocks, question, code_block_key):
@@ -82,6 +86,8 @@ tech_spec_handlers = [create_ask_and_save_handlers(tech_spec_code_blocks, questi
                       tech_spec_questions]
 explanatory_note_handlers = [create_ask_and_save_handlers(explanatory_note_code_blocks, question, key) for question, key
                              in explanatory_note_questions]
+feedback_handlers = [create_ask_and_save_handlers(feedback_code_blocks, question, key) for question, key
+                     in feedback_questions]
 
 
 def next_step_handler(message, step=0):
@@ -110,6 +116,13 @@ def next_step_handler(message, step=0):
         elif step == len(explanatory_note_handlers):
             create_document(message, explanatory_note_code_blocks[message.chat.id], 'explanatory_note_maket.docx',
                             'explanatory_note')
+    elif document_type == "feedback":
+        if step < len(feedback_handlers):
+            ask_handler, _ = feedback_handlers[step]
+            ask_handler(message)
+        elif step == len(feedback_handlers):
+            create_document(message, feedback_code_blocks[message.chat.id], 'feedback_maket.docx',
+                            'feedback')
 
 
 def start(message):
@@ -117,10 +130,12 @@ def start(message):
     button1 = types.InlineKeyboardButton("Титульный лист", callback_data="title_page")
     button2 = types.InlineKeyboardButton("Техническое задание", callback_data="technical_specifications")
     button3 = types.InlineKeyboardButton("Пояснительная записка", callback_data="explanatory_note")
+    button4 = types.InlineKeyboardButton("Отзыв руководителя", callback_data="feedback")
 
     keyboard.add(button1)
     keyboard.add(button2)
     keyboard.add(button3)
+    keyboard.add(button4)
 
     bot.send_message(message.chat.id, "Выберите документ, который хотите создать:", reply_markup=keyboard)
 
@@ -154,6 +169,8 @@ def reset_document_creation(chat_id):
         del tech_spec_code_blocks[chat_id]
     if chat_id in explanatory_note_code_blocks:
         del explanatory_note_code_blocks[chat_id]
+    if chat_id in feedback_code_blocks:
+        del feedback_code_blocks[chat_id]
 
 
 @bot.message_handler(func=lambda message: message.text == "/start" and message.chat.id in current_document_type)
@@ -172,10 +189,14 @@ def update_document_choice_to_inactive(chat_id, message_id, selected_document_ty
     button3 = types.InlineKeyboardButton(
         "Пояснительная записка" + (" ✅" if selected_document_type == "explanatory_note" else " ❌"),
         callback_data="ignore")
+    button4 = types.InlineKeyboardButton(
+        "Отзыв руководителя" + (" ✅" if selected_document_type == "feedback" else " ❌"),
+        callback_data="ignore")
 
     keyboard.add(button1)
     keyboard.add(button2)
     keyboard.add(button3)
+    keyboard.add(button4)
 
     bot.edit_message_text("Выберите документ, который хотите создать:", chat_id=chat_id, message_id=message_id,
                           reply_markup=keyboard)
@@ -239,7 +260,6 @@ def convert_to_pdf_callback(call):
     filename = get_filename_by_file_id(file_id)
 
     pdf_filename = os.path.splitext(filename)[0] + '.pdf'
-    # os.chmod("/Users/shapovv/PycharmProjects/Radost/output_files", 0o777)
     os.chmod(filename, 0o777)
     convert(filename, pdf_filename)
 
@@ -326,6 +346,9 @@ def handle_stop(message):
     elif document_type == "title_page":
         create_document(message, title_page_code_blocks[message.chat.id], 'title_page_maket.docx',
                         'title_page')
+    elif document_type == "feedback":
+        create_document(message, feedback_code_blocks[message.chat.id], 'feedback_maket.docx',
+                        'feedback')
 
 
 @bot.callback_query_handler(func=lambda call: True)
@@ -367,6 +390,17 @@ def document_template_handler(call):
                          "следуйте дальнейшим указаниям и подсказкам. \n\nВ любом месте вы можете остановиться и отправить ответ "
                          "позднее, а если захотите закончить и получить не до конца заполненный документ, введите /stop. \n\nЕсли вы "
                          "хотите пропустить любой шаг, необходимо отправить в ответ любой символ, тогда вы сможете заполнить этот раздел "
+                         "самостоятельно в итоговом документе.",
+                         parse_mode='HTML')
+        chat_steps[call.message.chat.id] = 0
+        next_step_handler(call.message, step=0)
+    elif document_type == "feedback":
+        bot.send_message(call.message.chat.id,
+                         "<b>Приступим к созданию вашего отзыва руководителя на прикладной проект (НИУ ВШЭ).</b>\n"
+                         "Сейчас мы поэтапно пройдём по всем пунктам, следуйте дальнейшим указаниям и подсказкам. \n\n"
+                         "В любом месте вы можете остановиться и отправить ответ позднее, а если захотите закончить и "
+                         "получить не до конца заполненный документ, введите /stop. \n\nЕсли вы хотите пропустить любой "
+                         "шаг, необходимо отправить в ответ любой символ, тогда вы сможете заполнить этот раздел "
                          "самостоятельно в итоговом документе.",
                          parse_mode='HTML')
         chat_steps[call.message.chat.id] = 0
